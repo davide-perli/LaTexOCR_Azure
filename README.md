@@ -25,6 +25,40 @@ http://localhost:8000
 - If you want the full local LaTeX-OCR pipeline (`pix2tex`), use Python 3.11 and install from `requirements.txt` instead.
 - PDF conversion via `pdf2image` on Windows requires Poppler installed and available on PATH.
 
+## Developer: Key functions and call flow
+
+This section documents the main functions and steps inside `app.py` and `formula_detector.py` so developers can quickly understand the core implementation.
+
+**`app.py`**
+- **`setup_latex_ocr_model()`**: imports and initializes the local `pix2tex` `LatexOCR` model (if available).
+- **`ensure_latex_ocr_model_loaded()`**: thread-safe retry logic used to load the model on demand and avoid permanent 503s on transient failures.
+- **`convert_pdf_to_images(pdf_bytes)`**: converts a PDF binary payload into a list of `PIL.Image` pages using `pdf2image`.
+- **Azure helpers**: `azure_extract_formula_from_image(image)` and `azure_analyze_image_bytes(img_bytes)` wrap calls to Azure Document Intelligence (`prebuilt-read` + `DocumentAnalysisFeature.FORMULAS`). They return formula text or the analyze result.
+- **Endpoints and their flow**:
+  - **`/api/simple-extract`**: full pipeline for uploaded PDFs or images. For PDFs it calls `convert_pdf_to_images()`, for each page it:
+    - converts the page to a NumPy array
+    - instantiates `FormulaDetector()` and calls `detect_formulas(image_array)`
+    - crops each returned `(x,y,w,h)` region from the `PIL.Image`, pads/normalizes to grayscale, then calls the local `MODEL(cropped)` to produce LaTeX
+  - **`/api/auto-detect-formulas`**: accepts a base64 image, decodes to `PIL.Image`, runs `FormulaDetector.detect_formulas()` and returns preview crops and bounding boxes for the frontend.
+  - **`/api/extract-boxes`**: accepts user-specified boxes (canvas coordinates) plus an `engine` parameter (`local` or `azure`). For `local` it crops, converts to `L`, and calls `MODEL(cropped)`; for `azure` it pads the crop and calls `azure_analyze_image_bytes()`.
+- **Behavior notes**: the app checks `MODEL_LOADED`/`AZURE_READY` and returns HTTP 503 when the requested engine is unavailable. Environment variables `DOCUMENT_INTELLIGENCE_ENDPOINT` and `DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY` enable Azure mode.
+
+**`formula_detector.py`**
+- **`FormulaDetector`**: the main detection class used by `app.py`.
+  - `pdf_to_images(pdf_path, dpi=300)`: renders PDF pages via `fitz` into RGB NumPy arrays for the CV pipeline.
+  - `preprocess_image(image)`: converts to grayscale, applies adaptive thresholding and denoising to prepare for contour detection.
+  - `detect_formulas(image)`: main detection routine. It preprocesses, inverts the image, applies horizontal and vertical dilation kernels to connect formula components, finds contours, filters candidates by area/aspect/size, merges nearby regions via `merge_nearby_formulas()`, and returns a sorted list of `(x, y, w, h)` regions in image pixels.
+  - `filter_text_regions(formulas, page_obj, img_shape)`: optional PDF-text based filter that extracts text from the PDF page (via `fitz`) inside each region and decides whether it is likely a formula using heuristics.
+  - `is_formula_text(text, width, height)`: heuristic scoring function that inspects operators, math symbols, line structure, and descriptive keywords to accept/reject regions as formulas.
+  - `merge_nearby_formulas(formulas, horizontal_gap, vertical_gap)`: merges boxes that are close horizontally/vertically (useful for multi-line formulas or stacked elements).
+  - `crop_formula(image, region, padding=10)`: safe crop helper that adds padding and clamps to image bounds.
+  - `process_pdf(pdf_path, output_dir)`: end-to-end helper that converts a PDF to images, detects formulas, crops and saves them to disk (used by the CLI-style `main()` in the module).
+
+**Developer notes / tuning**
+- Detector hyperparameters (thresholds, kernel sizes, area limits, gaps) are defined inline in `formula_detector.py` — tune them for different scan resolutions or document styles.
+- Coordinate convention: `FormulaDetector` returns regions in image pixel space; `app.py` uses those same pixel coordinates to crop `PIL.Image` pages.
+- For debugging, inspect `debug_detections.py` and the `extracted_formulas/` output directory to view crops and annotated pages.
+
 ## Demo
 
 Running the full pipeline:
