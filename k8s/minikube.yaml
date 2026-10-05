@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: latexocr
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: latexocr
@@ -33,10 +33,10 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 6
           env:
-            - name: DOCUMENT_INTELLIGENCE_ENDPOINT
-              value: ""
-            - name: DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY
-              value: ""
+            # - name: DOCUMENT_INTELLIGENCE_ENDPOINT
+            #   value: ""
+            # - name: DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY
+            #   value: ""
 ---
 apiVersion: v1
 kind: Service

@@ -1,23 +1,18 @@
-import os
-import io
-import logging
-import tempfile
-import base64
-import threading
-from typing import Dict, List, Tuple
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+import os, io, logging, base64, threading
+from typing import List
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image, ImageOps
 import numpy as np
 from formula_detector import FormulaDetector
-from dotenv import load_dotenv
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.documentintelligence.models import DocumentAnalysisFeature, AnalyzeResult
-from azure.core.exceptions import HttpResponseError
+# from dotenv import load_dotenv
+# from azure.ai.documentintelligence import DocumentIntelligenceClient
+# from azure.core.credentials import AzureKeyCredential
+# from azure.ai.documentintelligence.models import DocumentAnalysisFeature, AnalyzeResult
+# from azure.core.exceptions import HttpResponseError
 
 # this logger captures backend events (model load, pdf conversion, box processing)
 logging.basicConfig(level=logging.INFO)
@@ -111,24 +106,24 @@ except Exception as e:
     MODEL_LOAD_ERROR = f"{type(e).__name__}: {e}"
     logger.exception("latex-ocr model failed to load")
 
-load_dotenv()
-AZURE_ENDPOINT = os.getenv("DOCUMENT_INTELLIGENCE_ENDPOINT")
-AZURE_KEY = os.getenv("DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY")
-AZURE_CLIENT = None
-AZURE_READY = False
+# load_dotenv()
+# AZURE_ENDPOINT = os.getenv("DOCUMENT_INTELLIGENCE_ENDPOINT")
+# AZURE_KEY = os.getenv("DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY")
+# AZURE_CLIENT = None
+# AZURE_READY = False
 
-if AZURE_ENDPOINT and AZURE_KEY:
-    try:
-        AZURE_CLIENT = DocumentIntelligenceClient(
-            endpoint=AZURE_ENDPOINT,
-            credential=AzureKeyCredential(AZURE_KEY)
-        )
-        AZURE_READY = True
-        logger.info("Azure Document Intelligence client initialized")
-    except Exception as e:
-        logger.warning(f"Azure Document Intelligence client failed to initialize: {e}")
-else:
-    logger.info("Azure Document Intelligence credentials not found")
+# if AZURE_ENDPOINT and AZURE_KEY:
+#     try:
+#         AZURE_CLIENT = DocumentIntelligenceClient(
+#             endpoint=AZURE_ENDPOINT,
+#             credential=AzureKeyCredential(AZURE_KEY)
+#         )
+#         AZURE_READY = True
+#         logger.info("Azure Document Intelligence client initialized")
+#     except Exception as e:
+#         logger.warning(f"Azure Document Intelligence client failed to initialize: {e}")
+# else:
+#     logger.info("Azure Document Intelligence credentials not found")
 
 def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]: # converts a binary pdf payload to a list of PIL.Image pages using pdf2image
     try:

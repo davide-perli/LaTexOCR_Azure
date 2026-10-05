@@ -5,7 +5,7 @@
 fastapi
 uvicorn[standard]
 python-multipart
-python-dotenv
+# python-dotenv
 
 pillow
 numpy
@@ -13,7 +13,7 @@ opencv-python-headless
 pymupdf
 
 pdf2image
-PyPDF2
+# PyPDF2
 
-azure-ai-documentintelligence
-azure-core
+# azure-ai-documentintelligence
+# azure-core

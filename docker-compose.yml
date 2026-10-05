@@ -9,5 +9,5 @@ services:
       - "8000:8000"
     environment:
       # Optional: only needed if you use the Azure engine
-      DOCUMENT_INTELLIGENCE_ENDPOINT: ""
-      DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY: ""
+      # DOCUMENT_INTELLIGENCE_ENDPOINT: ""
+      # DOCUMENT_INTELLIGENCE_SUBSCRIPTION_KEY: ""
