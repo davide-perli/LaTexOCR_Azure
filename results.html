@@ -114,9 +114,14 @@
             if (result.preview) {
                 // for auto detected boxes with preview
                 croppedImageHTML = `
-                    <div class="card-image">
-                        <div class="w-100 text-muted small mb-1">Original selection</div>
-                        <img src="${result.preview}" alt="Original selection" class="img-fluid">
+                    <div class="card-image" style="display:block; width:100%; max-width:100%;">
+                        <div style="display:block; width:100%; box-sizing:border-box;
+                            white-space:normal; overflow-wrap:anywhere;
+                            word-break:break-word; margin-bottom:8px;">
+                            Original selection
+                        </div>
+                        <img src="${result.preview}" alt="Original selection" class="img-fluid"
+                        style="display:block; width:auto; max-width:100%; height:auto;">
                     </div>
                 `;
             }
@@ -124,11 +129,16 @@
             let processedImageHTML = '';
             if (result.processed_image) {
                 const paddingLabel = result.padding ? ` (${result.padding}px padding)` : '';
-                const caption = result.engine === 'azure' ? `Processed image sent to Azure${paddingLabel}` : `Processed image sent to local model${paddingLabel}`;
+                const caption = result.engine === 'azure' ? `Processed image sent to Azure${paddingLabel}` : `Processed image sent to model${paddingLabel}`;
                 processedImageHTML = `
-                    <div class="card-image">
-                        <div class="w-100 text-muted small mb-1">${caption}</div>
-                        <img src="${result.processed_image}" alt="Processed input" class="img-fluid">
+                    <div class="card-image" style="display:block; width:100%; max-width:100%;">
+                        <div style="display:block; width:100%; box-sizing:border-box;
+                            white-space:normal; overflow-wrap:anywhere;
+                            word-break:break-word; margin-bottom:8px;">
+                        ${caption}
+                        </div>
+                        <img src="${result.processed_image}" alt="Processed input" class="img-fluid"
+                        style="display:block; width:auto; max-width:100%; height:auto;">
                     </div>
                 `;
             }
@@ -147,13 +157,17 @@
                 contentHTML = `
                     <div class="card-body">
                         <h5>LaTeX Code:</h5>
-                        <div class="latex-code" id="latex-${index}">${escapeHtml(latexCode)}</div>
+                        <div class="latex-code" id="latex-${index}"
+                        style="width:fit-content; max-width:100%; overflow-x:auto; white-space:nowrap;">
+                        ${escapeHtml(latexCode)}
+                        </div>
                         <button class="btn btn-primary btn-sm mt-2" onclick="copyToClipboard('latex-${index}', this)">
                             Copy LaTeX
                         </button>
                         
                         <h5 class="mt-3">Rendered formula:</h5>
-                        <div class="latex-rendered">
+                        <div class="latex-rendered"
+                        style="width:fit-content; max-width:100%; overflow-x:auto; overflow-y:hidden; white-space:nowrap;">
                             \\[${latexCode}\\]
                         </div>
                     </div>
